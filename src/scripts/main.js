@@ -187,32 +187,72 @@ function eventHandlertoForm() {
 
     setTimeout(function () {
       div.style.visibility = 'hidden';
-    }, 2000);
+    }, 5000);
   };
 
   document
     .querySelector('.new-employee-form button')
     .addEventListener('click', (e) => {
-      // e.preventDefault();
+      e.preventDefault();
 
-      if (e.textContent !== 'success') {
+      const nameInput = document.forms[0].elements.name.value;
+      const age = Number(document.forms[0].elements.age.value);
+      const nameMin = 4;
+      const ageMin = 18;
+      const ageMax = 90;
+
+      if (
+        nameInput.trim().length >= nameMin &&
+        age >= ageMin &&
+        age <= ageMax
+      ) {
         pushNotification(
+          500,
           10,
-          10,
-          'Title of Success message',
-          'Message example.\n ' +
-            'Notification should contain title and description.',
+          'Success',
+          'New peron was added to table.',
           'success',
         );
+
+        addPerson(document.forms[0].elements);
+        document.forms[0].reset();
       } else {
         pushNotification(
-          150,
+          500,
           10,
-          'Title of Error message',
-          'Message example.\n ' +
-            'Notification should contain title and description.',
+          'Error please fill the form',
+          'Name should be more than ' +
+            nameMin +
+            ' symbols.\n ' +
+            'Age value is more ' +
+            ageMin +
+            ' or less than ' +
+            ageMax +
+            '.',
           'error',
         );
       }
     });
+}
+
+function addPerson(formVal) {
+  const dataForRow = {
+    name: formVal.name.value,
+    position: formVal.position.value,
+    office: formVal.office.value,
+    age: formVal.age.value,
+    salary: '$' + formVal.salary.value,
+  };
+
+  const tbody = document.querySelector('tbody');
+  const tr = document.createElement('tr');
+
+  Object.values(dataForRow).forEach((val) => {
+    const td = document.createElement('td');
+
+    td.textContent = val;
+    tr.append(td);
+  });
+
+  tbody.append(tr);
 }
