@@ -18,9 +18,6 @@ function makeCopyToObj() {
   });
 }
 
-const classASC = '_asc';
-const classDESC = '_desc';
-
 let lastSortedColumn = null;
 let lastDirectionAsc = true;
 
@@ -32,7 +29,7 @@ function sorting(idx) {
     lastDirectionAsc = true; // нова колонка => ASC
   }
 
-  const direction = toggleSortDirection() ? 1 : -1;
+  const direction = lastDirectionAsc ? 1 : -1;
   const sorted = [...data].sort((a, b) => {
     const aVal = a[idx];
     const bVal = b[idx];
@@ -53,14 +50,6 @@ function bindTableSort() {
       sorting(e.currentTarget.textContent.toLowerCase());
     });
   });
-}
-
-function toggleSortDirection() {
-  const isAsc = table.classList.toggle(classASC);
-
-  table.classList.toggle(classDESC, !isAsc);
-
-  return isAsc;
 }
 
 function renderTable(rows) {
