@@ -26,7 +26,7 @@ function sorting(idx) {
     lastDirectionAsc = !lastDirectionAsc;
   } else {
     lastSortedColumn = idx;
-    lastDirectionAsc = true; // нова колонка => ASC
+    lastDirectionAsc = true;
   }
 
   const direction = lastDirectionAsc ? 1 : -1;
