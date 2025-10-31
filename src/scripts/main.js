@@ -1,18 +1,8 @@
 'use strict';
 
-// write code here
-
 const table = document.querySelector('table');
 const tHead = table.tHead;
 const data = [];
-
-makeCopyToObj();
-
-Array.from(tHead.rows[0].cells).forEach((th) => {
-  th.addEventListener('click', (e) => {
-    sorting(e.currentTarget.textContent.toLowerCase());
-  });
-});
 
 function makeCopyToObj() {
   [...table.tBodies].forEach((block) => {
@@ -32,56 +22,55 @@ const classASC = '_asc';
 const classDESC = '_desc';
 
 function sorting(idx) {
-  let sorted;
+  const direction = toggleSortDirection() ? 1 : -1;
+  const sorted = [...data].sort((a, b) => {
+    const aVal = a[idx];
+    const bVal = b[idx];
 
-  if (sordedType()) {
-    sorted = [...data].sort((a, b) => {
-      if (typeof a[idx] === 'string') {
-        return b[idx].localeCompare(a[idx]);
-      } else {
-        return b[idx] - a[idx];
-      }
-    });
-  } else {
-    sorted = [...data].sort((a, b) => {
-      if (typeof a[idx] === 'string') {
-        return a[idx].localeCompare(b[idx]);
-      } else {
-        return a[idx] - b[idx];
-      }
-    });
-  }
+    if (typeof aVal === 'string') {
+      return aVal.localeCompare(bVal) * direction;
+    } else {
+      return (aVal - bVal) * direction;
+    }
+  });
 
   renderTable(sorted);
 }
 
-function sordedType() {
-  if (table.className.includes(classASC)) {
-    table.classList.remove(classASC);
-    table.classList.add(classDESC);
-  } else {
-    table.classList.remove(classDESC);
-    table.classList.add(classASC);
-  }
-
-  return table.className.includes(classASC);
+function bindTableSort() {
+  Array.from(tHead.rows[0].cells).forEach((th) => {
+    th.addEventListener('click', (e) => {
+      sorting(e.currentTarget.textContent.toLowerCase());
+    });
+  });
 }
 
-function renderTable(obj) {
+function toggleSortDirection() {
+  const isAsc = table.classList.toggle(classASC);
+
+  table.classList.toggle(classDESC, !isAsc);
+
+  return isAsc;
+}
+
+function renderTable(rows) {
   const tbody = table.tBodies[0];
 
   tbody.innerHTML = '';
 
   const fragment = document.createDocumentFragment();
 
-  obj.forEach((item) => {
+  rows.forEach((person) => {
     const tr = document.createElement('tr');
 
     ['name', 'position', 'office', 'age', 'salary'].forEach((key) => {
       const td = document.createElement('td');
 
-      td.textContent = item[key];
-
+      if (key === 'salary') {
+        td.textContent = priceFormat(person[key]);
+      } else {
+        td.textContent = person[key];
+      }
       tr.appendChild(td);
     });
 
@@ -91,21 +80,38 @@ function renderTable(obj) {
   tbody.append(fragment);
 }
 
-function activeRow() {
-  document.querySelectorAll('table tr').forEach((tr) => {
-    tr.classList.remove('active');
-
-    tr.addEventListener('click', () => {
-      document.querySelectorAll('table tr').forEach((row) => {
-        row.classList.remove('active');
-      });
-
-      tr.classList.add('active');
-    });
-  });
+function priceFormat(str) {
+  return '$' + str.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
-activeRow();
+function createRow(person) {
+  const tbody = table.tBodies[0];
+  const tr = document.createElement('tr');
+
+  ['name', 'position', 'office', 'age', 'salary'].forEach((key) => {
+    const td = document.createElement('td');
+
+    td.textContent = person[key];
+    tr.appendChild(td);
+  });
+
+  tbody.appendChild(tr);
+  data.push(person);
+}
+
+function activeRow() {
+  table.tBodies[0].addEventListener('click', (e) => {
+    if (e.target.tagName !== 'TD') {
+      return;
+    }
+
+    document.querySelectorAll('table tbody tr.active').forEach((row) => {
+      row.classList.remove('active');
+    });
+
+    e.target.closest('tr').classList.add('active');
+  });
+}
 
 function createForm() {
   const form = document.createElement('form');
@@ -158,12 +164,10 @@ function createForm() {
 
   document.body.append(form);
 
-  eventHandlertoForm();
+  attachFormHandler(form);
 }
 
-createForm();
-
-function eventHandlertoForm() {
+function attachFormHandler(form) {
   const pushNotification = (posTop, posRight, title, description, type) => {
     const div = document.createElement('div');
     const h2 = document.createElement('h2');
@@ -186,73 +190,76 @@ function eventHandlertoForm() {
     document.body.append(div);
 
     setTimeout(function () {
-      div.style.visibility = 'hidden';
+      div.remove();
     }, 5000);
   };
 
-  document
-    .querySelector('.new-employee-form button')
-    .addEventListener('click', (e) => {
-      e.preventDefault();
+  const { name: nameInput, position, office, age, salary } = form.elements;
 
-      const nameInput = document.forms[0].elements.name.value;
-      const age = Number(document.forms[0].elements.age.value);
-      const nameMin = 4;
-      const ageMin = 18;
-      const ageMax = 90;
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
 
-      if (
-        nameInput.trim().length >= nameMin &&
-        age >= ageMin &&
-        age <= ageMax
-      ) {
-        pushNotification(
-          500,
-          10,
-          'Success',
-          'New peron was added to table.',
-          'success',
-        );
+    if (!form.reportValidity()) {
+      return;
+    }
 
-        addPerson(document.forms[0].elements);
-        document.forms[0].reset();
-      } else {
-        pushNotification(
-          500,
-          10,
-          'Error please fill the form',
-          'Name should be more than ' +
-            nameMin +
-            ' symbols.\n ' +
-            'Age value is more ' +
-            ageMin +
-            ' or less than ' +
-            ageMax +
-            '.',
-          'error',
-        );
-      }
-    });
+    const nameMin = 4;
+    const ageMin = 18;
+    const ageMax = 90;
+
+    if (nameInput.value.trim().length < nameMin) {
+      pushNotification(
+        500,
+        10,
+        'Error - not correct Name field',
+        'Name should be more than ' + nameMin + ' symbols.\n ',
+        'error',
+      );
+
+      return;
+    }
+
+    if (
+      Number(age.value.trim()) < ageMin ||
+      Number(age.value.trim()) > ageMax
+    ) {
+      pushNotification(
+        500,
+        10,
+        'Error - not correct Age field',
+        'Age value is more ' + ageMin + ' or less than ' + ageMax + '.\n ',
+        'error',
+      );
+
+      return;
+    }
+
+    pushNotification(
+      500,
+      10,
+      'Success',
+      'New peron was added to table.',
+      'success',
+    );
+
+    const obj = {
+      name: nameInput.value,
+      position: position.value,
+      office: office.value,
+      age: age.value,
+      salary: priceFormat(salary.value.trim()),
+    };
+
+    createRow(obj);
+    document.forms[0].reset();
+  });
 }
 
-function addPerson(formVal) {
-  const dataForRow = {
-    name: formVal.name.value,
-    position: formVal.position.value,
-    office: formVal.office.value,
-    age: formVal.age.value,
-    salary: '$' + formVal.salary.value,
-  };
+document.addEventListener('DOMContentLoaded', init);
 
-  const tbody = document.querySelector('tbody');
-  const tr = document.createElement('tr');
-
-  Object.values(dataForRow).forEach((val) => {
-    const td = document.createElement('td');
-
-    td.textContent = val;
-    tr.append(td);
-  });
-
-  tbody.append(tr);
+function init() {
+  makeCopyToObj();
+  bindTableSort();
+  createForm();
+  activeRow();
 }
