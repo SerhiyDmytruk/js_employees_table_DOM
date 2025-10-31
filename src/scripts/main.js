@@ -21,7 +21,17 @@ function makeCopyToObj() {
 const classASC = '_asc';
 const classDESC = '_desc';
 
+let lastSortedColumn = null;
+let lastDirectionAsc = true;
+
 function sorting(idx) {
+  if (lastSortedColumn === idx) {
+    lastDirectionAsc = !lastDirectionAsc;
+  } else {
+    lastSortedColumn = idx;
+    lastDirectionAsc = true; // нова колонка => ASC
+  }
+
   const direction = toggleSortDirection() ? 1 : -1;
   const sorted = [...data].sort((a, b) => {
     const aVal = a[idx];
@@ -91,7 +101,7 @@ function createRow(person) {
   ['name', 'position', 'office', 'age', 'salary'].forEach((key) => {
     const td = document.createElement('td');
 
-    td.textContent = person[key];
+    td.textContent = key === 'salary' ? priceFormat(person[key]) : person[key];
     tr.appendChild(td);
   });
 
@@ -270,8 +280,8 @@ function attachFormHandler(form) {
       name: nameInput.value,
       position: position.value,
       office: office.value,
-      age: age.value,
-      salary: priceFormat(salary.value.trim()),
+      age: Number(age.value.trim()),
+      salary: Number(salary.value.trim()),
     };
 
     createRow(obj);
