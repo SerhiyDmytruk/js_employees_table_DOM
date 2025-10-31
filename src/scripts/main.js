@@ -148,7 +148,6 @@ function createForm() {
 
     formEl.setAttribute('name', el);
     formEl.setAttribute('data-qa', el);
-    formEl.setAttribute('required', true);
 
     const label = document.createElement('label');
 
@@ -160,6 +159,8 @@ function createForm() {
   const btn = document.createElement('button');
 
   btn.textContent = 'Save to table';
+  btn.setAttribute('type', 'submit');
+
   form.append(btn);
 
   document.body.append(form);
@@ -199,7 +200,18 @@ function attachFormHandler(form) {
   form.addEventListener('submit', (e) => {
     e.preventDefault();
 
-    if (!form.reportValidity()) {
+    const fields = [nameInput, position, office, age, salary];
+    const empty = fields.filter((f) => !f.value.trim());
+
+    if (empty.length > 0) {
+      pushNotification(
+        500,
+        10,
+        'Error - required fields',
+        'Please fill all fields before submitting.',
+        'error',
+      );
+
       return;
     }
 
@@ -213,6 +225,18 @@ function attachFormHandler(form) {
         10,
         'Error - not correct Name field',
         'Name should be more than ' + nameMin + ' symbols.\n ',
+        'error',
+      );
+
+      return;
+    }
+
+    if (position.value.trim().length < 1 && salary.value.trim().length < 1) {
+      pushNotification(
+        500,
+        10,
+        'Error',
+        'Fields should be not empty.\n ',
         'error',
       );
 
